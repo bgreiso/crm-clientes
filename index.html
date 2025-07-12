@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>CRM Clientes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #e7d9b4; font-family: 'Segoe UI', sans-serif; }
+    .leads { background-color: #9ed1b7; }
+    .prospecto { background-color: #78a890; }
+    .cliente { background-color: #092b5a; }
+    h2 { font-weight: 600; }
+    select.form-select, input.form-control { border-radius: 0.5rem; }
+    button.btn { border-radius: 0.5rem; }
+  </style>
+</head>
+<body class="container py-5">
+
+  <h2 class="mb-4 text-center">CRM de Clientes</h2>
+
+  <form id="clienteForm" class="bg-white p-4 rounded shadow-sm mb-5">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <input type="text" id="nombre" class="form-control" placeholder="Nombre" required>
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="telefono" class="form-control" placeholder="Teléfono" required>
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="zona" class="form-control" placeholder="Zona">
+      </div>
+      <div class="col-md-4">
+        <select id="estatus" class="form-select">
+          <option value="leads">Leads</option>
+          <option value="prospecto">Prospecto</option>
+          <option value="cliente">Cliente</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary w-100" type="submit">Agregar Cliente</button>
+      </div>
+      <div class="col-md-4">
+        <select id="filtroEstatus" class="form-select">
+          <option value="todos">Mostrar Todos</option>
+          <option value="leads">Solo Leads</option>
+          <option value="prospecto">Solo Prospectos</option>
+          <option value="cliente">Solo Clientes</option>
+        </select>
+      </div>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-hover bg-white shadow-sm" id="clientesTabla">
+    <thead class="table-light">
+      <tr><th>Nombre</th><th>Teléfono</th><th>Zona</th><th>Estatus</th><th>Copiar</th></tr>
+    </thead>
+    <tbody id="clientesBody"></tbody>
+  </table>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      // 🔐 Pega aquí tu configuración personalizada de Firebase
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const clientesRef = collection(db, "clientes");
+
+    const clienteForm = document.getElementById("clienteForm");
+    const clientesBody = document.getElementById("clientesBody");
+    const filtroEstatus = document.getElementById("filtroEstatus");
+
+    clienteForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nombre = nombre.value.trim();
+      const telefono = telefono.value.trim();
+      const zona = zona.value.trim();
+      const estatus = estatus.value;
+      await addDoc(clientesRef, { nombre, telefono, zona, estatus });
+      e.target.reset();
+    });
+
+    filtroEstatus.addEventListener("change", () => {
+      mostrarClientes(filtroEstatus.value);
+    });
+
+    let clientesData = [];
+
+    onSnapshot(clientesRef, (snapshot) => {
+      clientesData = [];
+      snapshot.forEach((docSnap) => {
+        clientesData.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      mostrarClientes(filtroEstatus.value);
+    });
+
+    window.actualizarEstatus = async (id, nuevoEstatus) => {
+      await updateDoc(doc(db, "clientes", id), { estatus: nuevoEstatus });
+    };
+
+    function mostrarClientes(filtro) {
+      clientesBody.innerHTML = "";
+      const filtrados = filtro === "todos" ? clientesData : clientesData.filter(c => c.estatus === filtro);
+      filtrados.forEach(cliente => {
+        const tr = document.createElement("tr");
+        tr.className = cliente.estatus;
+        tr.innerHTML = `
+          <td>${cliente.nombre}</td>
+          <td>${cliente.telefono}</td>
+          <td>${cliente.zona}</td>
+          <td>
+            <select onchange="actualizarEstatus('${cliente.id}', this.value)" class="form-select">
+              <option value="leads" ${cliente.estatus==="leads"?"selected":""}>Leads</option>
+              <option value="prospecto" ${cliente.estatus==="prospecto"?"selected":""}>Prospecto</option>
+              <option value="cliente" ${cliente.estatus==="cliente"?"selected":""}>Cliente</option>
+            </select>
+          </td>
+          <td><button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText('${cliente.telefono}')">📋 Copiar</button></td>
+        `;
+        clientesBody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
