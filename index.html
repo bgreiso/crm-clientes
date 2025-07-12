@@ -19,18 +19,48 @@
 
   <h2 class="mb-4 text-center">CRM de Clientes</h2>
 
-  <!-- Tu formulario y tabla permanecen igual -->
   <form id="clienteForm" class="bg-white p-4 rounded shadow-sm mb-5">
-    <!-- ... mantén tu formulario igual ... -->
+    <div class="row g-3">
+      <div class="col-md-4">
+        <input type="text" id="nombre" class="form-control" placeholder="Nombre" required>
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="telefono" class="form-control" placeholder="Teléfono" required>
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="zona" class="form-control" placeholder="Zona">
+      </div>
+      <div class="col-md-4">
+        <select id="estatus" class="form-select">
+          <option value="leads">Leads</option>
+          <option value="prospecto">Prospecto</option>
+          <option value="cliente">Cliente</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary w-100" type="submit">Agregar Cliente</button>
+      </div>
+      <div class="col-md-4">
+        <select id="filtroEstatus" class="form-select">
+          <option value="todos">Mostrar Todos</option>
+          <option value="leads">Solo Leads</option>
+          <option value="prospecto">Solo Prospectos</option>
+          <option value="cliente">Solo Clientes</option>
+        </select>
+      </div>
+    </div>
   </form>
 
   <table class="table table-bordered table-hover bg-white shadow-sm" id="clientesTabla">
-    <!-- ... mantén tu tabla igual ... -->
+    <thead class="table-light">
+      <tr><th>Nombre</th><th>Teléfono</th><th>Zona</th><th>Estatus</th><th>Copiar</th></tr>
+    </thead>
+    <tbody id="clientesBody"></tbody>
   </table>
 
   <!-- Firebase SDK CORREGIDO -->
   <script type="module">
-    // Importa las versiones COMPATIBLES de Firebase
+    // Importa TODOS los módulos necesarios de Firebase v9+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { 
       getFirestore, 
@@ -38,9 +68,11 @@
       addDoc, 
       onSnapshot, 
       updateDoc, 
-      doc 
+      doc,
+      serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    // Configuración de Firebase (la tuya es correcta)
     const firebaseConfig = {
       apiKey: "AIzaSyD5yGHEfk8AOgAQJlu3LaQ_6hGAhWqtx2M",
       authDomain: "crm-clientes-b3f84.firebaseapp.com",
@@ -53,17 +85,21 @@
     // Inicializa Firebase
     const app = initializeApp(firebaseConfig);
     
-    // Obtiene la instancia de Firestore
+    // Inicializa Firestore
     const db = getFirestore(app);
     
     // Referencia a la colección
     const clientesRef = collection(db, "clientes");
 
-    // Resto de tu código JavaScript...
+    // Elementos del DOM
     const clienteForm = document.getElementById("clienteForm");
     const clientesBody = document.getElementById("clientesBody");
     const filtroEstatus = document.getElementById("filtroEstatus");
 
+    // Array para almacenar clientes
+    let clientesData = [];
+
+    // Evento para agregar cliente
     clienteForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       
@@ -73,30 +109,31 @@
       const estatus = document.getElementById("estatus").value;
       
       try {
-        const docRef = await addDoc(clientesRef, {
+        await addDoc(clientesRef, {
           nombre,
           telefono,
           zona,
           estatus,
-          fechaCreacion: new Date()
+          fechaCreacion: serverTimestamp()
         });
-        console.log("Documento agregado con ID: ", docRef.id);
         clienteForm.reset();
-      } catch (e) {
-        console.error("Error al agregar documento: ", e);
-        alert("Error al guardar el cliente: " + e.message);
+        console.log("Cliente agregado correctamente");
+      } catch (error) {
+        console.error("Error al agregar cliente:", error);
+        alert(`Error al guardar: ${error.message}`);
       }
     });
 
-    // Resto de tus funciones (mostrarClientes, etc.)...
+    // Escuchar cambios en Firestore
     onSnapshot(clientesRef, (snapshot) => {
       clientesData = [];
-      snapshot.forEach((docSnap) => {
-        clientesData.push({ id: docSnap.id, ...docSnap.data() });
+      snapshot.forEach((doc) => {
+        clientesData.push({ id: doc.id, ...doc.data() });
       });
       mostrarClientes(filtroEstatus.value);
     });
 
+    // Función para mostrar clientes
     function mostrarClientes(filtro) {
       clientesBody.innerHTML = "";
       const filtrados = filtro === "todos" ? clientesData : clientesData.filter(c => c.estatus === filtro);
@@ -121,13 +158,20 @@
       });
     }
 
+    // Función global para actualizar estatus
     window.actualizarEstatus = async (id, nuevoEstatus) => {
       try {
         await updateDoc(doc(db, "clientes", id), { estatus: nuevoEstatus });
+        console.log("Estatus actualizado correctamente");
       } catch (error) {
-        console.error("Error al actualizar:", error);
+        console.error("Error al actualizar estatus:", error);
       }
     };
+
+    // Filtro de estatus
+    filtroEstatus.addEventListener("change", () => {
+      mostrarClientes(filtroEstatus.value);
+    });
   </script>
 </body>
 </html>
