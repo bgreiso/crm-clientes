@@ -13,11 +13,21 @@
     h2 { font-weight: 600; }
     select.form-select, input.form-control { border-radius: 0.5rem; }
     button.btn { border-radius: 0.5rem; }
+    .copy-all-btn { margin-bottom: 1rem; }
+    .copy-btn { cursor: pointer; }
+    .copy-btn:hover { background-color: #e9ecef; }
   </style>
 </head>
 <body class="container py-5">
 
   <h2 class="mb-4 text-center">CRM de Clientes</h2>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <button id="copyAllBtn" class="btn btn-secondary copy-all-btn">
+      📋 Copiar todos los teléfonos visibles
+    </button>
+    <span id="copyStatus" class="text-muted"></span>
+  </div>
 
   <form id="clienteForm" class="bg-white p-4 rounded shadow-sm mb-5">
     <div class="row g-3">
@@ -53,14 +63,18 @@
 
   <table class="table table-bordered table-hover bg-white shadow-sm" id="clientesTabla">
     <thead class="table-light">
-      <tr><th>Nombre</th><th>Teléfono</th><th>Zona</th><th>Estatus</th><th>Copiar</th></tr>
+      <tr>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Zona</th>
+        <th>Estatus</th>
+        <th>Copiar</th>
+      </tr>
     </thead>
     <tbody id="clientesBody"></tbody>
   </table>
 
-  <!-- Firebase SDK CORREGIDO -->
   <script type="module">
-    // Importa TODOS los módulos necesarios de Firebase v9+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { 
       getFirestore, 
@@ -72,7 +86,6 @@
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Configuración de Firebase (la tuya es correcta)
     const firebaseConfig = {
       apiKey: "AIzaSyD5yGHEfk8AOgAQJlu3LaQ_6hGAhWqtx2M",
       authDomain: "crm-clientes-b3f84.firebaseapp.com",
@@ -82,24 +95,57 @@
       appId: "1:541457679961:web:e4f2729f461087d2dd9348"
     };
 
-    // Inicializa Firebase
     const app = initializeApp(firebaseConfig);
-    
-    // Inicializa Firestore
     const db = getFirestore(app);
-    
-    // Referencia a la colección
     const clientesRef = collection(db, "clientes");
 
-    // Elementos del DOM
     const clienteForm = document.getElementById("clienteForm");
     const clientesBody = document.getElementById("clientesBody");
     const filtroEstatus = document.getElementById("filtroEstatus");
+    const copyAllBtn = document.getElementById("copyAllBtn");
+    const copyStatus = document.getElementById("copyStatus");
 
-    // Array para almacenar clientes
     let clientesData = [];
 
-    // Evento para agregar cliente
+    // Función para copiar texto al portapapeles
+    async function copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showCopyStatus("✓ Copiado al portapapeles");
+        return true;
+      } catch (err) {
+        console.error("Error al copiar: ", err);
+        showCopyStatus("Error al copiar", true);
+        return false;
+      }
+    }
+
+    // Función para mostrar estado de copiado
+    function showCopyStatus(message, isError = false) {
+      copyStatus.textContent = message;
+      copyStatus.style.color = isError ? "red" : "green";
+      setTimeout(() => copyStatus.textContent = "", 3000);
+    }
+
+    // Copiar todos los teléfonos visibles
+    copyAllBtn.addEventListener("click", async () => {
+      const visiblePhones = Array.from(document.querySelectorAll("#clientesBody tr"))
+        .map(row => row.cells[1].textContent.trim())
+        .filter(phone => phone);
+      
+      if (visiblePhones.length === 0) {
+        showCopyStatus("No hay teléfonos para copiar", true);
+        return;
+      }
+
+      const phonesText = visiblePhones.join("\n");
+      const success = await copyToClipboard(phonesText);
+      
+      if (success) {
+        console.log("Teléfonos copiados:", phonesText);
+      }
+    });
+
     clienteForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       
@@ -117,23 +163,23 @@
           fechaCreacion: serverTimestamp()
         });
         clienteForm.reset();
-        console.log("Cliente agregado correctamente");
       } catch (error) {
         console.error("Error al agregar cliente:", error);
-        alert(`Error al guardar: ${error.message}`);
       }
     });
 
-    // Escuchar cambios en Firestore
+    filtroEstatus.addEventListener("change", () => {
+      mostrarClientes(filtroEstatus.value);
+    });
+
     onSnapshot(clientesRef, (snapshot) => {
       clientesData = [];
-      snapshot.forEach((doc) => {
-        clientesData.push({ id: doc.id, ...doc.data() });
+      snapshot.forEach((docSnap) => {
+        clientesData.push({ id: docSnap.id, ...docSnap.data() });
       });
       mostrarClientes(filtroEstatus.value);
     });
 
-    // Función para mostrar clientes
     function mostrarClientes(filtro) {
       clientesBody.innerHTML = "";
       const filtrados = filtro === "todos" ? clientesData : clientesData.filter(c => c.estatus === filtro);
@@ -152,26 +198,36 @@
               <option value="cliente" ${cliente.estatus==="cliente"?"selected":""}>Cliente</option>
             </select>
           </td>
-          <td><button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText('${cliente.telefono}')">📋 Copiar</button></td>
+          <td>
+            <button class="btn btn-sm btn-secondary copy-btn" 
+                    data-phone="${cliente.telefono || ''}">
+              Copiar
+            </button>
+          </td>
         `;
         clientesBody.appendChild(tr);
       });
+
+      // Agregar eventos a los botones de copiar
+      document.querySelectorAll(".copy-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const phone = e.target.getAttribute("data-phone");
+          if (phone) {
+            await copyToClipboard(phone);
+          } else {
+            showCopyStatus("No hay número para copiar", true);
+          }
+        });
+      });
     }
 
-    // Función global para actualizar estatus
     window.actualizarEstatus = async (id, nuevoEstatus) => {
       try {
         await updateDoc(doc(db, "clientes", id), { estatus: nuevoEstatus });
-        console.log("Estatus actualizado correctamente");
       } catch (error) {
         console.error("Error al actualizar estatus:", error);
       }
     };
-
-    // Filtro de estatus
-    filtroEstatus.addEventListener("change", () => {
-      mostrarClientes(filtroEstatus.value);
-    });
   </script>
 </body>
 </html>
