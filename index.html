@@ -9,13 +9,12 @@
     body { background-color: #e7d9b4; font-family: 'Segoe UI', sans-serif; }
     .leads { background-color: #9ed1b7; }
     .prospecto { background-color: #78a890; }
-    .cliente { background-color: #092b5a; color: white; }
+    .cliente { background-color: #092b5a; }
     h2 { font-weight: 600; }
     select.form-select, input.form-control { border-radius: 0.5rem; }
     button.btn { border-radius: 0.5rem; }
     .copy-all-btn { margin-bottom: 1rem; }
     .copy-btn { cursor: pointer; }
-    .copy-btn:hover { background-color: #e9ecef; }
   </style>
 </head>
 <body class="container py-5">
@@ -24,7 +23,7 @@
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <button id="copyAllBtn" class="btn btn-secondary copy-all-btn">
-      📋 Copiar todos los teléfonos visibles
+      Copiar todos los teléfonos visibles
     </button>
     <span id="copyStatus" class="text-muted"></span>
   </div>
@@ -68,7 +67,6 @@
         <th>Teléfono</th>
         <th>Zona</th>
         <th>Estatus</th>
-        <th>Copiar</th>
       </tr>
     </thead>
     <tbody id="clientesBody"></tbody>
