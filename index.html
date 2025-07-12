@@ -9,7 +9,7 @@
     body { background-color: #e7d9b4; font-family: 'Segoe UI', sans-serif; }
     .leads { background-color: #9ed1b7; }
     .prospecto { background-color: #78a890; }
-    .cliente { background-color: #092b5a; }
+    .cliente { background-color: #092b5a; color: white; }
     h2 { font-weight: 600; }
     select.form-select, input.form-control { border-radius: 0.5rem; }
     button.btn { border-radius: 0.5rem; }
@@ -60,34 +60,17 @@
 
   <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-    apiKey: "AIzaSyD5yGHEfk8AOgAQJlu3LaQ_6hGAhWqtx2M",
-    authDomain: "crm-clientes-b3f84.firebaseapp.com",
-    projectId: "crm-clientes-b3f84",
-    storageBucket: "crm-clientes-b3f84.firebasestorage.app",
-    messagingSenderId: "541457679961",
-    appId: "1:541457679961:web:e4f2729f461087d2dd9348"
+      apiKey: "AIzaSyD5yGHEfk8AOgAQJlu3LaQ_6hGAhWqtx2M",
+      authDomain: "crm-clientes-b3f84.firebaseapp.com",
+      projectId: "crm-clientes-b3f84",
+      storageBucket: "crm-clientes-b3f84.appspot.com",
+      messagingSenderId: "541457679961",
+      appId: "1:541457679961:web:e4f2729f461087d2dd9348"
     };
-
-    async function pruebaGuardarCliente() {
-  try {
-    const docRef = await addDoc(collection(db, "clientes"), {
-      nombre: "Prueba Test",
-      telefono: "0000000000",
-      zona: "Caña de azúcar",
-      estatus: "leads"
-    });
-    console.log("Cliente de prueba guardado con ID:", docRef.id);
-  } catch (error) {
-    console.error("Error al guardar cliente de prueba:", error);
-  }
-}
-
-// Ejecuta la función al cargar la página
-pruebaGuardarCliente();
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -99,12 +82,24 @@ pruebaGuardarCliente();
 
     clienteForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nombre = nombre.value.trim();
-      const telefono = telefono.value.trim();
-      const zona = zona.value.trim();
-      const estatus = estatus.value;
-      await addDoc(clientesRef, { nombre, telefono, zona, estatus });
-      e.target.reset();
+      
+      // Obtener valores de los inputs correctamente
+      const nombreValue = document.getElementById("nombre").value.trim();
+      const telefonoValue = document.getElementById("telefono").value.trim();
+      const zonaValue = document.getElementById("zona").value.trim();
+      const estatusValue = document.getElementById("estatus").value;
+      
+      try {
+        await addDoc(clientesRef, { 
+          nombre: nombreValue, 
+          telefono: telefonoValue, 
+          zona: zonaValue, 
+          estatus: estatusValue 
+        });
+        clienteForm.reset();
+      } catch (error) {
+        console.error("Error al agregar cliente: ", error);
+      }
     });
 
     filtroEstatus.addEventListener("change", () => {
@@ -122,19 +117,24 @@ pruebaGuardarCliente();
     });
 
     window.actualizarEstatus = async (id, nuevoEstatus) => {
-      await updateDoc(doc(db, "clientes", id), { estatus: nuevoEstatus });
+      try {
+        await updateDoc(doc(db, "clientes", id), { estatus: nuevoEstatus });
+      } catch (error) {
+        console.error("Error al actualizar estatus: ", error);
+      }
     };
 
     function mostrarClientes(filtro) {
       clientesBody.innerHTML = "";
       const filtrados = filtro === "todos" ? clientesData : clientesData.filter(c => c.estatus === filtro);
+      
       filtrados.forEach(cliente => {
         const tr = document.createElement("tr");
         tr.className = cliente.estatus;
         tr.innerHTML = `
-          <td>${cliente.nombre}</td>
-          <td>${cliente.telefono}</td>
-          <td>${cliente.zona}</td>
+          <td>${cliente.nombre || ''}</td>
+          <td>${cliente.telefono || ''}</td>
+          <td>${cliente.zona || ''}</td>
           <td>
             <select onchange="actualizarEstatus('${cliente.id}', this.value)" class="form-select">
               <option value="leads" ${cliente.estatus==="leads"?"selected":""}>Leads</option>
