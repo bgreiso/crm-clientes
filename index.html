@@ -72,6 +72,23 @@
     appId: "1:541457679961:web:e4f2729f461087d2dd9348"
     };
 
+    async function pruebaGuardarCliente() {
+  try {
+    const docRef = await addDoc(collection(db, "clientes"), {
+      nombre: "Prueba Test",
+      telefono: "0000000000",
+      zona: "Caña de azúcar",
+      estatus: "leads"
+    });
+    console.log("Cliente de prueba guardado con ID:", docRef.id);
+  } catch (error) {
+    console.error("Error al guardar cliente de prueba:", error);
+  }
+}
+
+// Ejecuta la función al cargar la página
+pruebaGuardarCliente();
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
