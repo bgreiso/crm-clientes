@@ -1,89 +1,501 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>CRM Clientes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM Fresco | Gestión de Clientes</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Open+Sans:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
-    body { background-color: #e7d9b4; font-family: 'Segoe UI', sans-serif; }
-    .leads { background-color: #9ed1b7; }
-    .prospecto { background-color: #78a890; }
-    .cliente { background-color: #092b5a; }
-    h2 { font-weight: 600; }
-    select.form-select, input.form-control { border-radius: 0.5rem; }
-    button.btn { border-radius: 0.5rem; }
-    .copy-all-btn { margin-bottom: 1rem; }
-    .copy-btn { cursor: pointer; }
+    :root {
+      --primary: #4a6fa5;
+      --primary-light: #7b9ed9;
+      --secondary: #6b8c42;
+      --accent: #ff7e5f;
+      --background: #f8faf7;
+      --card-bg: #ffffff;
+      --text: #3a3a3a;
+      --text-light: #6d6d6d;
+      --border: #d8e0d7;
+      --leads: #e3f0ff;
+      --prospecto: #fff4e0;
+      --cliente: #e8f5e9;
+      --success: #6b8c42;
+      --warning: #e9c46a;
+      --error: #e76f51;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      background-image: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
+      background-size: 20px 20px;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 30px 0;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(74, 111, 165, 0.15);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo i {
+      font-size: 32px;
+    }
+
+    /* Tarjetas */
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: var(--primary);
+      position: relative;
+      padding-bottom: 10px;
+    }
+
+    .card-title:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+
+    /* Formularios */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+      background-color: #f9fbf8;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+      background-color: white;
+    }
+
+    /* Botones */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #3d5c8c;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a7537;
+      transform: translateY(-1px);
+    }
+
+    .btn-accent {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .btn-accent:hover {
+      background-color: #e66a4b;
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background-color: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .btn-ghost:hover {
+      background-color: rgba(74, 111, 165, 0.1);
+    }
+
+    /* Tabla */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th {
+      background-color: var(--primary);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+    }
+
+    td {
+      padding: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background-color: rgba(74, 111, 165, 0.03);
+    }
+
+    .leads-row {
+      background-color: var(--leads);
+    }
+
+    .prospecto-row {
+      background-color: var(--prospecto);
+    }
+
+    .cliente-row {
+      background-color: var(--cliente);
+    }
+
+    .status-select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background-color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .status-select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    /* Acciones */
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 5px;
+      transition: all 0.3s;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-btn:hover {
+      background-color: rgba(74, 111, 165, 0.1);
+      color: var(--primary-light);
+      transform: scale(1.1);
+    }
+
+    /* Notificaciones */
+    .snackbar {
+      position: fixed;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      font-weight: 500;
+    }
+
+    .snackbar.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-10px);
+    }
+
+    .snackbar.success {
+      background-color: var(--success);
+      color: white;
+    }
+
+    .snackbar.error {
+      background-color: var(--error);
+      color: white;
+    }
+
+    .snackbar.warning {
+      background-color: var(--warning);
+      color: var(--text);
+    }
+
+    /* Archivo input */
+    .file-input-container {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .file-input {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+    }
+
+    /* Detalles naturales */
+    .natural-shadow {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .rounded-lg {
+      border-radius: 12px;
+    }
+    
+    .transition-all {
+      transition: all 0.3s ease;
+    }
+    
+    .hover-scale:hover {
+      transform: scale(1.02);
+    }
+    
+    .text-accent {
+      color: var(--accent);
+    }
+    
+    .bg-soft {
+      background-color: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(5px);
+    }
   </style>
 </head>
-<body class="container py-5">
-
-  <h2 class="mb-4 text-center">CRM de Clientes</h2>
-
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <button id="copyAllBtn" class="btn btn-secondary copy-all-btn">
-      Copiar todos los teléfonos visibles
-    </button>
-    <span id="copyStatus" class="text-muted"></span>
-  </div>
-
-  <form id="clienteForm" class="bg-white p-4 rounded shadow-sm mb-5">
-    <div class="row g-3">
-      <div class="col-md-4">
-        <input type="text" id="nombre" class="form-control" placeholder="Nombre" required>
+<body>
+  <div class="header">
+    <div class="container header-content">
+      <div class="logo">
+        <i class="fas fa-leaf"></i>
+        <span>CRM Clientes</span>
       </div>
-      <div class="col-md-4">
-        <input type="text" id="telefono" class="form-control" placeholder="Teléfono" required>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="zona" class="form-control" placeholder="Zona">
-      </div>
-      <div class="col-md-4">
-        <select id="estatus" class="form-select">
-          <option value="leads">Leads</option>
-          <option value="prospecto">Prospecto</option>
-          <option value="cliente">Cliente</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <button class="btn btn-primary w-100" type="submit">Agregar Cliente</button>
-      </div>
-      <div class="col-md-4">
-        <select id="filtroEstatus" class="form-select">
-          <option value="todos">Mostrar Todos</option>
-          <option value="leads">Solo Leads</option>
-          <option value="prospecto">Solo Prospectos</option>
-          <option value="cliente">Solo Clientes</option>
-        </select>
+      <div class="action-buttons">
+        <button id="copyAllBtn" class="btn btn-secondary">
+          <i class="fas fa-copy"></i> Copiar teléfonos
+        </button>
+        <div class="file-input-container">
+          <button class="btn btn-accent">
+            <i class="fas fa-address-book"></i> Importar contactos
+          </button>
+          <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls">
+        </div>
       </div>
     </div>
-  </form>
-
-  <table class="table table-bordered table-hover bg-white shadow-sm" id="clientesTabla">
-    <thead class="table-light">
-      <tr>
-        <th>Nombre</th>
-        <th>Teléfono</th>
-        <th>Zona</th>
-        <th>Estatus</th>
-      </tr>
-    </thead>
-    <tbody id="clientesBody"></tbody>
-  </table>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc, 
-      onSnapshot, 
-      updateDoc, 
-      doc,
-      serverTimestamp 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+  </div>
+  
+  <div class="container">
+    <div class="card natural-shadow">
+      <h2 class="card-title"><i class="fas fa-user-plus text-accent"></i> Nuevo Cliente</h2>
+      <form id="clienteForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="nombre"><i class="fas fa-user"></i> Nombre</label>
+            <input type="text" id="nombre" required placeholder="Ej: María González">
+          </div>
+          
+          <div class="form-group">
+            <label for="telefono"><i class="fas fa-phone"></i> Teléfono</label>
+            <input type="text" id="telefono" required placeholder="Ej: 4121234567">
+            <small class="text-light">Se agregará automáticamente el prefijo 58</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="zona"><i class="fas fa-map-marker-alt"></i> Zona</label>
+            <input type="text" id="zona" placeholder="Ej: Este, Centro, Oeste">
+          </div>
+          
+          <div class="form-group">
+            <label for="estatus"><i class="fas fa-tag"></i> Estatus</label>
+            <select id="estatus">
+              <option value="leads">Leads</option>
+              <option value="prospecto">Prospecto</option>
+              <option value="cliente">Cliente</option>
+            </select>
+          </div>
+          
+          <div class="form-group" style="align-self: flex-end;">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Guardar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="card natural-shadow">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <h2 class="card-title"><i class="fas fa-users text-accent"></i> Lista de Clientes</h2>
+        <div class="form-group" style="min-width: 250px;">
+          <label for="filtroEstatus"><i class="fas fa-filter"></i> Filtrar por estatus</label>
+          <select id="filtroEstatus">
+            <option value="todos">Mostrar Todos</option>
+            <option value="leads">Solo Leads</option>
+            <option value="prospecto">Solo Prospectos</option>
+            <option value="cliente">Solo Clientes</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="table-container rounded-lg bg-soft" style="margin-top: 20px;">
+        <table id="clientesTabla">
+          <thead>
+            <tr>
+              <th><i class="fas fa-user"></i> Nombre</th>
+              <th><i class="fas fa-phone"></i> Teléfono</th>
+              <th><i class="fas fa-map-marker-alt"></i> Zona</th>
+              <th><i class="fas fa-tag"></i> Estatus</th>
+              <th><i class="fas fa-cog"></i> Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="clientesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div id="snackbar" class="snackbar"></div>
+  
+  <script>
+    // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyD5yGHEfk8AOgAQJlu3LaQ_6hGAhWqtx2M",
       authDomain: "crm-clientes-b3f84.firebaseapp.com",
@@ -92,39 +504,60 @@
       messagingSenderId: "541457679961",
       appId: "1:541457679961:web:e4f2729f461087d2dd9348"
     };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const clientesRef = collection(db, "clientes");
-
+    
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const clientesRef = db.collection("clientes");
+    
+    // Elementos del DOM
     const clienteForm = document.getElementById("clienteForm");
     const clientesBody = document.getElementById("clientesBody");
     const filtroEstatus = document.getElementById("filtroEstatus");
     const copyAllBtn = document.getElementById("copyAllBtn");
-    const copyStatus = document.getElementById("copyStatus");
-
+    const fileInput = document.getElementById("fileInput");
+    const snackbar = document.getElementById("snackbar");
+    
     let clientesData = [];
-
-    // Función para copiar texto al portapapeles
+    
+    // Mostrar notificación
+    function showSnackbar(message, type = 'success') {
+      snackbar.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'exclamation-circle'}"></i>
+        ${message}
+      `;
+      snackbar.className = `snackbar ${type} show`;
+      
+      setTimeout(() => {
+        snackbar.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Formatear número de teléfono con prefijo 58
+    function formatPhoneNumber(phone) {
+      // Eliminar todo lo que no sea dígito
+      const cleaned = phone.replace(/\D/g, '');
+      
+      // Si ya empieza con 58 o +58, dejarlo como está
+      if (cleaned.startsWith('58') || phone.startsWith('+58')) {
+        return cleaned;
+      }
+      
+      // Agregar prefijo 58 si no lo tiene
+      return `58${cleaned}`;
+    }
+    
+    // Copiar al portapapeles
     async function copyToClipboard(text) {
       try {
         await navigator.clipboard.writeText(text);
-        showCopyStatus("✓ Copiado al portapapeles");
         return true;
       } catch (err) {
         console.error("Error al copiar: ", err);
-        showCopyStatus("Error al copiar", true);
         return false;
       }
     }
-
-    // Función para mostrar estado de copiado
-    function showCopyStatus(message, isError = false) {
-      copyStatus.textContent = message;
-      copyStatus.style.color = isError ? "red" : "green";
-      setTimeout(() => copyStatus.textContent = "", 3000);
-    }
-
+    
     // Copiar todos los teléfonos visibles
     copyAllBtn.addEventListener("click", async () => {
       const visiblePhones = Array.from(document.querySelectorAll("#clientesBody tr"))
@@ -132,100 +565,219 @@
         .filter(phone => phone);
       
       if (visiblePhones.length === 0) {
-        showCopyStatus("No hay teléfonos para copiar", true);
+        showSnackbar("No hay teléfonos para copiar", "warning");
         return;
       }
-
+      
       const phonesText = visiblePhones.join("\n");
       const success = await copyToClipboard(phonesText);
       
       if (success) {
+        showSnackbar(`${visiblePhones.length} teléfonos copiados`, "success");
         console.log("Teléfonos copiados:", phonesText);
+      } else {
+        showSnackbar("Error al copiar teléfonos", "error");
       }
     });
-
+    
+    // Importar contactos desde archivo
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      // Validar tipo de archivo
+      if (!file.name.match(/\.(csv|xlsx|xls)$/i)) {
+        showSnackbar("Por favor, sube un archivo CSV o Excel", "warning");
+        return;
+      }
+      
+      // Leer el archivo
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const content = e.target.result;
+        
+        // Extraer números de teléfono (simplificado)
+        const phoneRegex = /(\+?\d[\d\s\-\(\)]{7,}\d)/g;
+        const phones = content.match(phoneRegex) || [];
+        
+        if (phones.length === 0) {
+          showSnackbar("No se encontraron números en el archivo", "warning");
+          return;
+        }
+        
+        try {
+          // Mostrar confirmación
+          const confirmar = confirm(`¿Importar ${phones.length} contactos encontrados?`);
+          if (!confirmar) return;
+          
+          // Agregar cada número a la base de datos
+          let importedCount = 0;
+          for (const phone of phones) {
+            const formattedPhone = formatPhoneNumber(phone);
+            
+            await clientesRef.add({
+              nombre: "Contacto importado",
+              telefono: formattedPhone,
+              estatus: "leads",
+              fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            importedCount++;
+          }
+          
+          showSnackbar(`${importedCount} contactos importados correctamente`, "success");
+        } catch (error) {
+          console.error("Error al importar contactos:", error);
+          showSnackbar("Error al importar contactos", "error");
+        }
+      };
+      
+      if (file.name.match(/\.xlsx?$/i)) {
+        showSnackbar("Procesando archivo Excel...", "warning");
+        // En una implementación real, usarías una librería como xlsx para procesar el archivo
+        reader.readAsBinaryString(file);
+      } else {
+        reader.readAsText(file);
+      }
+    });
+    
+    // Agregar nuevo cliente
     clienteForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       
       const nombre = document.getElementById("nombre").value.trim();
-      const telefono = document.getElementById("telefono").value.trim();
+      const telefonoRaw = document.getElementById("telefono").value.trim();
       const zona = document.getElementById("zona").value.trim();
       const estatus = document.getElementById("estatus").value;
       
+      if (!nombre || !telefonoRaw) {
+        showSnackbar("Nombre y teléfono son requeridos", "warning");
+        return;
+      }
+      
+      const telefono = formatPhoneNumber(telefonoRaw);
+      
       try {
-        await addDoc(clientesRef, {
+        await clientesRef.add({
           nombre,
           telefono,
           zona,
           estatus,
-          fechaCreacion: serverTimestamp()
+          fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
         });
+        
         clienteForm.reset();
+        showSnackbar("Cliente agregado correctamente", "success");
       } catch (error) {
         console.error("Error al agregar cliente:", error);
+        showSnackbar("Error al agregar cliente", "error");
       }
     });
-
+    
+    // Actualizar estatus de un cliente
+    async function actualizarEstatus(id, nuevoEstatus) {
+      try {
+        await clientesRef.doc(id).update({ estatus: nuevoEstatus });
+        showSnackbar("Estatus actualizado correctamente", "success");
+      } catch (error) {
+        console.error("Error al actualizar estatus:", error);
+        showSnackbar("Error al actualizar estatus", "error");
+      }
+    }
+    
+    // Filtrar clientes
     filtroEstatus.addEventListener("change", () => {
       mostrarClientes(filtroEstatus.value);
     });
-
-    onSnapshot(clientesRef, (snapshot) => {
-      clientesData = [];
-      snapshot.forEach((docSnap) => {
-        clientesData.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      mostrarClientes(filtroEstatus.value);
-    });
-
+    
+    // Mostrar clientes en la tabla
     function mostrarClientes(filtro) {
       clientesBody.innerHTML = "";
       const filtrados = filtro === "todos" ? clientesData : clientesData.filter(c => c.estatus === filtro);
       
+      if (filtrados.length === 0) {
+        clientesBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-light);">
+              <i class="fas fa-users" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+              No hay clientes que coincidan con el filtro
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
       filtrados.forEach(cliente => {
         const tr = document.createElement("tr");
-        tr.className = cliente.estatus;
+        tr.className = `${cliente.estatus}-row transition-all`;
+        
+        // Formatear fecha
+        let fechaStr = "";
+        if (cliente.fechaCreacion) {
+          const fecha = cliente.fechaCreacion.toDate();
+          fechaStr = fecha.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        }
+        
         tr.innerHTML = `
-          <td>${cliente.nombre || ''}</td>
-          <td>${cliente.telefono || ''}</td>
-          <td>${cliente.zona || ''}</td>
           <td>
-            <select onchange="actualizarEstatus('${cliente.id}', this.value)" class="form-select">
+            <strong>${cliente.nombre || 'Sin nombre'}</strong>
+            ${fechaStr ? `<div class="text-light" style="font-size: 12px;">Agregado: ${fechaStr}</div>` : ''}
+          </td>
+          <td>${cliente.telefono || ''}</td>
+          <td>${cliente.zona || '—'}</td>
+          <td>
+            <select onchange="actualizarEstatus('${cliente.id}', this.value)" class="status-select">
               <option value="leads" ${cliente.estatus==="leads"?"selected":""}>Leads</option>
               <option value="prospecto" ${cliente.estatus==="prospecto"?"selected":""}>Prospecto</option>
               <option value="cliente" ${cliente.estatus==="cliente"?"selected":""}>Cliente</option>
             </select>
           </td>
           <td>
-            <button class="btn btn-sm btn-secondary copy-btn" 
-                    data-phone="${cliente.telefono || ''}">
-              Copiar
+            <button class="action-btn" onclick="copyPhone('${cliente.telefono || ''}')" title="Copiar teléfono">
+              <i class="fas fa-copy"></i>
             </button>
           </td>
         `;
+        
         clientesBody.appendChild(tr);
       });
-
-      // Agregar eventos a los botones de copiar
-      document.querySelectorAll(".copy-btn").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const phone = e.target.getAttribute("data-phone");
-          if (phone) {
-            await copyToClipboard(phone);
-          } else {
-            showCopyStatus("No hay número para copiar", true);
-          }
-        });
-      });
     }
-
-    window.actualizarEstatus = async (id, nuevoEstatus) => {
-      try {
-        await updateDoc(doc(db, "clientes", id), { estatus: nuevoEstatus });
-      } catch (error) {
-        console.error("Error al actualizar estatus:", error);
+    
+    // Copiar número de teléfono individual
+    window.copyPhone = async (phone) => {
+      if (!phone) {
+        showSnackbar("No hay número para copiar", "warning");
+        return;
+      }
+      
+      const success = await copyToClipboard(phone);
+      if (success) {
+        showSnackbar("Teléfono copiado al portapapeles", "success");
+      } else {
+        showSnackbar("Error al copiar teléfono", "error");
       }
     };
+    
+    // Escuchar cambios en la base de datos
+    clientesRef.onSnapshot((snapshot) => {
+      clientesData = [];
+      snapshot.forEach((doc) => {
+        clientesData.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Ordenar por fecha de creación (más recientes primero)
+      clientesData.sort((a, b) => {
+        const dateA = a.fechaCreacion ? a.fechaCreacion.toMillis() : 0;
+        const dateB = b.fechaCreacion ? b.fechaCreacion.toMillis() : 0;
+        return dateB - dateA;
+      });
+      
+      mostrarClientes(filtroEstatus.value);
+    });
   </script>
 </body>
 </html>
